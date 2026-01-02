@@ -1,47 +1,42 @@
 package com.example.taskmanager.service;
 
+import com.example.taskmanager.Database.DatabaseConnection;
 import com.example.taskmanager.model.User;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class UserService {
 
-    private List<User> users = new ArrayList<>();
-    private User loggedInUser;
-    private long idCounter = 1;
-
-    public User register(String username, String password) {
-        if (username == null || username.isBlank() ||
-                password == null || password.isBlank()) {
-            return null;
-        }
-
-        User user = new User(idCounter++, username, password);
-        users.add(user);
-        return user;
-    }
-
     public User login(String username, String password) {
-        for (User user : users) {
-            if (user.getUsername().equals(username) &&
-                    user.getPassword().equals(password)) {
-                loggedInUser = user;
-                return user;
+
+        String sql = """
+            SELECT * FROM users
+            WHERE username = ? AND password = ?
+            """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, username);
+            ps.setString(2, password);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return new User(
+                        rs.getInt("id"),
+                        rs.getString("username"),
+                        rs.getString("password")
+                );
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+
         return null;
-    }
-
-    public void logout() {
-        loggedInUser = null;
-    }
-
-    public User getLoggedInUser() {
-        return loggedInUser;
-    }
-
-    public List<User> getAllUsers() {
-        return users;
     }
 }
