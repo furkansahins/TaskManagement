@@ -2,13 +2,17 @@ package com.example.taskmanager.model;
 
 public class Task implements Completable {
 
-    private String title;
-    private String description;
-    private Priority priority;
-    private boolean completed;
-    private User user;
+    protected int id;
+    protected String title;
+    protected String description;
+    protected Priority priority;
+    protected boolean completed;
+    protected User user;
 
-    public Task(String title, String description, Priority priority, User user) {
+    public Task(int id, String title, String description,
+                Priority priority, User user) {
+
+        this.id = id;
         this.title = title;
         this.description = description;
         this.priority = priority;
@@ -16,28 +20,21 @@ public class Task implements Completable {
         this.completed = false;
     }
 
-    public String getTitle() {
-        return title;
+    @Override
+    public void complete() {
+        this.completed = true;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public Priority getPriority() {
-        return priority;
-    }
-
+    @Override
     public boolean isCompleted() {
         return completed;
     }
 
-    public User getUser() {
-        return user;
+    public int getId() {
+        return id;
     }
 
-    @Override
-    public void complete() {
-        this.completed = true;
+    public User getUser() {
+        return user;
     }
 }
