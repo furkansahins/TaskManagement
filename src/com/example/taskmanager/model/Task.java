@@ -37,4 +37,7 @@ public class Task implements Completable {
     public User getUser() {
         return user;
     }
+    public String getTitle() {
+        return title;
+    }
 }
