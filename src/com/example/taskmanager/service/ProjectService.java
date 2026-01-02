@@ -1,44 +1,75 @@
 package com.example.taskmanager.service;
 
+import com.example.taskmanager.Database.DatabaseConnection;
 import com.example.taskmanager.model.Project;
-import com.example.taskmanager.model.Task;
 import com.example.taskmanager.model.User;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProjectService {
 
-    private final List<Project> projects = new ArrayList<>();
-
     public Project createProject(String name, User owner) {
+
         if (name == null || name.isBlank()) {
             return null;
         }
 
-        Project project = new Project(name, owner);
-        projects.add(project);
-        return project;
+        String sql = """
+            INSERT INTO projects (name, owner_id)
+            VALUES (?, ?)
+            """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+
+            ps.setString(1, name);
+            ps.setInt(2, owner.getId());
+            ps.executeUpdate();
+
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                return new Project(rs.getInt(1), name, owner);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     public List<Project> getProjectsByUser(User user) {
-        List<Project> result = new ArrayList<>();
 
-        for (Project project : projects) {
-            if (project.getOwner().equals(user)) {
-                result.add(project);
+        List<Project> projects = new ArrayList<>();
+
+        String sql = """
+            SELECT * FROM projects
+            WHERE owner_id = ?
+            """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, user.getId());
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                projects.add(new Project(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        user
+                ));
             }
-        }
-        return result;
-    }
 
-    public void addTaskToProject(Project project, Task task) {
-        if (project != null && task != null) {
-            project.addTask(task);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    }
 
-    public void deleteProject(Project project) {
-        projects.remove(project);
+        return projects;
     }
 }
