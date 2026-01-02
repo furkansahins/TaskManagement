@@ -16,11 +16,11 @@ public class Project {
         return id;
     }
 
-    public String getName() {
-        return name;
-    }
-
     public User getOwner() {
         return owner;
+    }
+
+    public String getName() {
+        return name;
     }
 }

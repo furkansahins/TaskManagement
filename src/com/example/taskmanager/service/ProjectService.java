@@ -14,14 +14,10 @@ public class ProjectService {
 
     public Project createProject(String name, User owner) {
 
-        if (name == null || name.isBlank()) {
-            return null;
-        }
-
         String sql = """
             INSERT INTO projects (name, owner_id)
             VALUES (?, ?)
-            """;
+        """;
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(
@@ -33,7 +29,11 @@ public class ProjectService {
 
             ResultSet rs = ps.getGeneratedKeys();
             if (rs.next()) {
-                return new Project(rs.getInt(1), name, owner);
+                return new Project(
+                        rs.getInt(1),
+                        name,
+                        owner
+                );
             }
 
         } catch (Exception e) {
@@ -50,7 +50,7 @@ public class ProjectService {
         String sql = """
             SELECT * FROM projects
             WHERE owner_id = ?
-            """;
+        """;
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
