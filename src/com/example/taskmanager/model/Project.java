@@ -5,24 +5,30 @@ import java.util.List;
 
 public class Project {
 
-    private Long id;
     private String name;
-    private String description;
+    private User owner;
     private List<Task> tasks;
 
-    public Project(Long id, String name, String description) {
-        this.id = id;
+    public Project(String name, User owner) {
         this.name = name;
-        this.description = description;
+        this.owner = owner;
         this.tasks = new ArrayList<>();
-    }
-
-    public Long getId() {
-        return id;
     }
 
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User owner) {
+        this.owner = owner;
     }
 
     public List<Task> getTasks() {
@@ -30,6 +36,12 @@ public class Project {
     }
 
     public void addTask(Task task) {
-        tasks.add(task);
+        if (!tasks.contains(task)) {
+            tasks.add(task);
+        }
+    }
+
+    public void removeTask(Task task) {
+        tasks.remove(task);
     }
 }

@@ -3,23 +3,19 @@ package com.example.taskmanager.service;
 import com.example.taskmanager.model.*;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TaskService {
 
-    private List<Task> tasks = new ArrayList<>();
-    private long idCounter = 1;
+    private final List<Task> tasks = new ArrayList<>();
 
     public Task createTask(String title, String description,
                            Priority priority, User user) {
 
-        if (title == null || title.isBlank()) {
-            return null;
-        }
+        if (title == null || title.isBlank()) return null;
 
-        Task task = new Task(idCounter++, title, description, priority, user);
+        Task task = new Task(title, description, priority, user);
         tasks.add(task);
         return task;
     }
@@ -28,12 +24,10 @@ public class TaskService {
                                      Priority priority, User user,
                                      LocalDate deadline) {
 
-        if (title == null || title.isBlank() || deadline == null) {
-            return null;
-        }
+        if (title == null || title.isBlank() || deadline == null) return null;
 
         TimedTask task = new TimedTask(
-                idCounter++, title, description, priority, user, deadline
+                title, description, priority, user, deadline
         );
         tasks.add(task);
         return task;
@@ -53,18 +47,7 @@ public class TaskService {
         task.complete();
     }
 
-    // 🔥 OVERDUE LOGIC
-    public boolean isOverdue(TimedTask task) {
-        if (task.isCompleted()) {
-            return false;
-        }
-        return task.getDeadline().isBefore(LocalDate.now());
-    }
-
-    public long overdueDays(TimedTask task) {
-        if (!isOverdue(task)) {
-            return 0;
-        }
-        return ChronoUnit.DAYS.between(task.getDeadline(), LocalDate.now());
+    public void deleteTask(Task task) {
+        tasks.remove(task);
     }
 }

@@ -2,30 +2,43 @@ package com.example.taskmanager.service;
 
 import com.example.taskmanager.model.Project;
 import com.example.taskmanager.model.Task;
+import com.example.taskmanager.model.User;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProjectService {
 
-    private List<Project> projects = new ArrayList<>();
-    private long idCounter = 1;
+    private final List<Project> projects = new ArrayList<>();
 
-    public Project createProject(String name, String description) {
+    public Project createProject(String name, User owner) {
         if (name == null || name.isBlank()) {
             return null;
         }
 
-        Project project = new Project(idCounter++, name, description);
+        Project project = new Project(name, owner);
         projects.add(project);
         return project;
     }
 
-    public void addTaskToProject(Project project, Task task) {
-        project.addTask(task);
+    public List<Project> getProjectsByUser(User user) {
+        List<Project> result = new ArrayList<>();
+
+        for (Project project : projects) {
+            if (project.getOwner().equals(user)) {
+                result.add(project);
+            }
+        }
+        return result;
     }
 
-    public List<Project> getAllProjects() {
-        return projects;
+    public void addTaskToProject(Project project, Task task) {
+        if (project != null && task != null) {
+            project.addTask(task);
+        }
+    }
+
+    public void deleteProject(Project project) {
+        projects.remove(project);
     }
 }

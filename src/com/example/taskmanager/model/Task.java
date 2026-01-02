@@ -2,24 +2,18 @@ package com.example.taskmanager.model;
 
 public class Task implements Completable {
 
-    private Long id;
     private String title;
     private String description;
-    private boolean completed;
     private Priority priority;
+    private boolean completed;
     private User user;
 
-    public Task(Long id, String title, String description, Priority priority, User user) {
-        this.id = id;
+    public Task(String title, String description, Priority priority, User user) {
         this.title = title;
         this.description = description;
         this.priority = priority;
         this.user = user;
         this.completed = false;
-    }
-
-    public Long getId() {
-        return id;
     }
 
     public String getTitle() {
@@ -34,6 +28,10 @@ public class Task implements Completable {
         return priority;
     }
 
+    public boolean isCompleted() {
+        return completed;
+    }
+
     public User getUser() {
         return user;
     }
@@ -41,10 +39,5 @@ public class Task implements Completable {
     @Override
     public void complete() {
         this.completed = true;
-    }
-
-    @Override
-    public boolean isCompleted() {
-        return completed;
     }
 }
