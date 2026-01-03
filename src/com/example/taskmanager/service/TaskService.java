@@ -104,4 +104,55 @@ public class TaskService {
             e.printStackTrace();
         }
     }
+    public List<Task> getTasksByProject(int projectId) {
+
+        List<Task> tasks = new ArrayList<>();
+
+        String sql = """
+        SELECT * FROM tasks
+        WHERE project_id = ?
+        ORDER BY id
+        """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, projectId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+
+                LocalDate deadline =
+                        rs.getDate("deadline") != null
+                                ? rs.getDate("deadline").toLocalDate()
+                                : null;
+
+                User user = new User(rs.getInt("user_id"), "", "");
+
+                if (deadline != null) {
+                    tasks.add(new TimedTask(
+                            rs.getInt("id"),
+                            rs.getString("title"),
+                            rs.getString("description"),
+                            Priority.valueOf(rs.getString("priority")),
+                            user,
+                            deadline
+                    ));
+                } else {
+                    tasks.add(new Task(
+                            rs.getInt("id"),
+                            rs.getString("title"),
+                            rs.getString("description"),
+                            Priority.valueOf(rs.getString("priority")),
+                            user
+                    ));
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return tasks;
+    }
 }

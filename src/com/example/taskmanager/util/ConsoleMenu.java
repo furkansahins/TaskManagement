@@ -24,9 +24,9 @@ public class ConsoleMenu {
     }
 
     /* ================= MAIN MENU ================= */
-
     private void showMainMenu() {
-        System.out.println("\n1. Login");
+        System.out.println("\n=== MAIN MENU ===");
+        System.out.println("1. Login");
         System.out.println("2. Register");
         System.out.println("0. Exit");
 
@@ -50,9 +50,10 @@ public class ConsoleMenu {
         currentUser = userService.login(username, password);
 
         if (currentUser != null) {
+            System.out.println("Login successful! Welcome, " + currentUser.getUsername());
             userMenu();
         } else {
-            System.out.println("Login failed.");
+            System.out.println("Login failed. Try again.");
         }
     }
 
@@ -64,14 +65,14 @@ public class ConsoleMenu {
         String password = scanner.nextLine();
 
         userService.register(username, password);
-        System.out.println("User registered.");
+        System.out.println("User registered successfully.");
     }
 
     /* ================= USER MENU ================= */
-
     private void userMenu() {
         while (true) {
-            System.out.println("\n1. Task Menu");
+            System.out.println("\n=== USER MENU ===");
+            System.out.println("1. Task Menu");
             System.out.println("2. Project Menu");
             System.out.println("0. Logout");
 
@@ -90,10 +91,10 @@ public class ConsoleMenu {
     }
 
     /* ================= TASK MENU ================= */
-
     private void taskMenu() {
         while (true) {
-            System.out.println("\n1. Add Task");
+            System.out.println("\n--- TASK MENU ---");
+            System.out.println("1. Add Task");
             System.out.println("2. Add Timed Task");
             System.out.println("3. List Tasks");
             System.out.println("4. Complete Task");
@@ -117,8 +118,8 @@ public class ConsoleMenu {
     private void addTask() {
         System.out.print("Title: ");
         String title = scanner.nextLine();
-
         taskService.createTask(title, "", Priority.MEDIUM, currentUser);
+        System.out.println("Task added.");
     }
 
     private void addTimedTask() {
@@ -129,58 +130,71 @@ public class ConsoleMenu {
         LocalDate deadline = LocalDate.parse(scanner.nextLine());
 
         taskService.createTimedTask(title, "", Priority.HIGH, currentUser, deadline);
+        System.out.println("Timed task added.");
     }
 
     private void listTasks() {
         List<Task> tasks = taskService.getTasksByUser(currentUser);
-
         if (tasks.isEmpty()) {
             System.out.println("No tasks found.");
             return;
         }
 
-        for (int i = 0; i < tasks.size(); i++) {
-            Task task = tasks.get(i);
-            System.out.print((i + 1) + ". " + task.getTitle());
-
-            if (task instanceof TimedTask timedTask && timedTask.isOverdue()) {
-                System.out.print(" ⚠ OVERDUE (" + timedTask.daysOverdue() + " days)");
+        System.out.println("\n=== YOUR TASKS ===");
+        for (Task task : tasks) {
+            System.out.print("ID: " + task.getId() + " | " + task.getTitle());
+            if (task instanceof TimedTask timedTask) {
+                System.out.print(" | Deadline: " + timedTask.getDeadline());
+                if (timedTask.isOverdue()) {
+                    System.out.print(" ⚠ OVERDUE (" + timedTask.daysOverdue() + " days)");
+                }
             }
-            System.out.println();
+            System.out.println(task.isCompleted() ? " ✅ Completed" : "");
         }
     }
 
     private void completeTask() {
-        List<Task> tasks = taskService.getTasksByUser(currentUser);
-        if (tasks.isEmpty()) return;
-
         listTasks();
-        System.out.print("Select task number: ");
+        System.out.print("Enter Task ID to complete: ");
+        int taskId = Integer.parseInt(scanner.nextLine());
+        Task task = taskService.getTasksByUser(currentUser).stream()
+                .filter(t -> t.getId() == taskId)
+                .findFirst()
+                .orElse(null);
 
-        int index = Integer.parseInt(scanner.nextLine()) - 1;
-        taskService.completeTask(tasks.get(index));
+        if (task != null) {
+            taskService.completeTask(task);
+            System.out.println("Task marked as completed.");
+        } else {
+            System.out.println("Invalid Task ID.");
+        }
     }
 
     private void deleteTask() {
-        List<Task> tasks = taskService.getTasksByUser(currentUser);
-        if (tasks.isEmpty()) return;
-
         listTasks();
-        System.out.print("Select task number: ");
+        System.out.print("Enter Task ID to delete: ");
+        int taskId = Integer.parseInt(scanner.nextLine());
+        Task task = taskService.getTasksByUser(currentUser).stream()
+                .filter(t -> t.getId() == taskId)
+                .findFirst()
+                .orElse(null);
 
-        int index = Integer.parseInt(scanner.nextLine()) - 1;
-        taskService.deleteTask(tasks.get(index));
+        if (task != null) {
+            taskService.deleteTask(task);
+            System.out.println("Task deleted.");
+        } else {
+            System.out.println("Invalid Task ID.");
+        }
     }
 
     /* ================= PROJECT MENU ================= */
-
     private void projectMenu() {
         while (true) {
-            System.out.println("\n1. Create Project");
+            System.out.println("\n--- PROJECT MENU ---");
+            System.out.println("1. Create Project");
             System.out.println("2. List Projects");
             System.out.println("3. Assign Task to Project");
-            System.out.println("4. List Tasks in Project");
-            System.out.println("5. Delete Project");
+            System.out.println("4. Delete Project");
             System.out.println("0. Back");
 
             String choice = scanner.nextLine();
@@ -189,8 +203,7 @@ public class ConsoleMenu {
                 case "1" -> createProject();
                 case "2" -> listProjects();
                 case "3" -> assignTaskToProject();
-                case "4" -> listTasksInProject();
-                case "5" -> deleteProject();
+                case "4" -> deleteProject();
                 case "0" -> { return; }
                 default -> System.out.println("Invalid choice.");
             }
@@ -200,56 +213,88 @@ public class ConsoleMenu {
     private void createProject() {
         System.out.print("Project name: ");
         String name = scanner.nextLine();
-
         projectService.createProject(name, currentUser);
+        System.out.println("Project created.");
     }
 
     private void listProjects() {
         List<Project> projects = projectService.getProjectsByUser(currentUser);
-
         if (projects.isEmpty()) {
             System.out.println("No projects found.");
             return;
         }
 
-        for (int i = 0; i < projects.size(); i++) {
-            System.out.println((i + 1) + ". " + projects.get(i).getName());
+        System.out.println("\n=== YOUR PROJECTS ===");
+        for (Project project : projects) {
+            System.out.println("- " + project.getName());
+
+            // Project altındaki taskleri getir
+            List<Task> tasksInProject = taskService.getTasksByProject(project.getId());
+            if (tasksInProject.isEmpty()) {
+                System.out.println("   (No tasks)");
+            } else {
+                for (Task task : tasksInProject) {
+                    System.out.print(task.getId() + " | " + task.getTitle());
+                    if (task instanceof TimedTask timedTask) {
+                        System.out.print(" | Deadline: " + timedTask.getDeadline());
+                        if (timedTask.isOverdue()) {
+                            System.out.print(" ⚠ OVERDUE (" + timedTask.daysOverdue() + " days)");
+                        }
+                    }
+                    System.out.println(task.isCompleted() ? " ✅ Completed" : "");
+                }
+            }
         }
     }
 
     private void assignTaskToProject() {
         List<Project> projects = projectService.getProjectsByUser(currentUser);
-        List<Task> tasks = taskService.getTasksByUser(currentUser);
-
-        if (projects.isEmpty() || tasks.isEmpty()) return;
-
-        listProjects();
-        System.out.print("Select project: ");
-        int pIndex = Integer.parseInt(scanner.nextLine()) - 1;
-
-        listTasks();
-        System.out.print("Select task: ");
-        int tIndex = Integer.parseInt(scanner.nextLine()) - 1;
-
-        projectService.addTaskToProject(projects.get(pIndex), tasks.get(tIndex));
-    }
-
-    private void listTasksInProject() {
-        List<Project> projects = projectService.getProjectsByUser(currentUser);
-        if (projects.isEmpty()) return;
-
-        listProjects();
-        System.out.print("Select project: ");
-        int index = Integer.parseInt(scanner.nextLine()) - 1;
-
-        List<Task> tasks = projects.get(index).getTasks();
-        if (tasks.isEmpty()) {
-            System.out.println("No tasks in this project.");
+        if (projects.isEmpty()) {
+            System.out.println("No projects available.");
             return;
         }
 
+        System.out.println("\n=== PROJECTS ===");
+        for (Project project : projects) {
+            System.out.println(project.getId() + " | " + project.getName());
+        }
+
+        System.out.print("Enter Project ID to assign task: ");
+        int projectId = Integer.parseInt(scanner.nextLine());
+        Project project = projects.stream()
+                .filter(p -> p.getId() == projectId)
+                .findFirst()
+                .orElse(null);
+
+        if (project == null) {
+            System.out.println("Project not found.");
+            return;
+        }
+
+        List<Task> tasks = taskService.getTasksByUser(currentUser);
+        if (tasks.isEmpty()) {
+            System.out.println("No tasks to assign.");
+            return;
+        }
+
+        System.out.println("\n=== TASKS ===");
         for (Task task : tasks) {
-            System.out.println("- " + task.getTitle());
+            System.out.print(task.getId() + " | " + task.getTitle());
+            if (task instanceof TimedTask timedTask) {
+                System.out.print(" | Deadline: " + timedTask.getDeadline());
+            }
+            System.out.println(task.isCompleted() ? " ✅ Completed" : "");
+        }
+
+        System.out.print("Enter Task ID to assign to project: ");
+        int taskId = Integer.parseInt(scanner.nextLine());
+        Task task = tasks.stream().filter(t -> t.getId() == taskId).findFirst().orElse(null);
+
+        if (task != null) {
+            projectService.addTaskToProject(project, task);
+            System.out.println("Task assigned to project.");
+        } else {
+            System.out.println("Invalid Task ID.");
         }
     }
 
@@ -257,10 +302,23 @@ public class ConsoleMenu {
         List<Project> projects = projectService.getProjectsByUser(currentUser);
         if (projects.isEmpty()) return;
 
-        listProjects();
-        System.out.print("Select project: ");
-        int index = Integer.parseInt(scanner.nextLine()) - 1;
+        System.out.println("\n=== PROJECTS ===");
+        for (Project project : projects) {
+            System.out.println(project.getId() + " | " + project.getName());
+        }
 
-        projectService.deleteProject(projects.get(index));
+        System.out.print("Enter Project ID to delete: ");
+        int projectId = Integer.parseInt(scanner.nextLine());
+        Project project = projects.stream()
+                .filter(p -> p.getId() == projectId)
+                .findFirst()
+                .orElse(null);
+
+        if (project != null) {
+            projectService.deleteProject(project);
+            System.out.println("Project deleted.");
+        } else {
+            System.out.println("Invalid Project ID.");
+        }
     }
 }
