@@ -3,6 +3,9 @@ package com.example.taskmanager.service;
 import com.example.taskmanager.Database.DatabaseConnection;
 import com.example.taskmanager.model.*;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -187,6 +190,52 @@ public class TaskService {
                 completed
         );
     }
+    public String exportProjectTasksToTxt(int projectId, String projectName) {
 
+        List<Task> tasks = getTasksByProject(projectId);
+
+        // 📂 Desktop path (Windows / Mac / Linux uyumlu)
+        String desktopPath = System.getProperty("user.home") + File.separator + "Desktop";
+
+        String fileName = projectName.replaceAll("\\s+", "_") + ".txt";
+        String fullPath = desktopPath + File.separator + fileName;
+
+        try (FileWriter writer = new FileWriter(fullPath)) {
+
+            writer.write("=== PROJECT: " + projectName + " ===\n\n");
+
+            if (tasks.isEmpty()) {
+                writer.write("No tasks.\n");
+            }
+
+            for (Task task : tasks) {
+
+                writer.write(task.getId() + " | " + task.getTitle());
+
+                if (task.getPriority() != null) {
+                    writer.write(" | " + task.getPriority());
+                }
+
+                if (task instanceof TimedTask timedTask) {
+                    writer.write(" | Deadline: " + timedTask.getDeadline());
+
+                    if (timedTask.isOverdue()) {
+                        writer.write(" | OVERDUE");
+                    }
+                }
+
+                if (task.isCompleted()) {
+                    writer.write(" | DONE");
+                }
+
+                writer.write("\n");
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return fullPath;
+    }
 
 }

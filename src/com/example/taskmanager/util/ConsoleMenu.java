@@ -189,6 +189,7 @@ public class ConsoleMenu {
             System.out.println("2. List Projects");
             System.out.println("3. Assign Task to Project");
             System.out.println("4. Delete Project");
+            System.out.println("5. Export Tasks (TXT)");
             System.out.println("0. Back");
 
             String choice = scanner.nextLine();
@@ -198,6 +199,7 @@ public class ConsoleMenu {
                 case "2" -> listProjects();
                 case "3" -> assignTaskToProject();
                 case "4" -> deleteProject();
+                case "5" -> exportProjectTasks();
                 case "0" -> { return; }
                 default -> System.out.println("Invalid choice.");
             }
@@ -346,4 +348,27 @@ public class ConsoleMenu {
 
         System.out.println();
     }
+    private void exportProjectTasks() {
+        listProjects();
+
+        System.out.print("Enter Project ID: ");
+        int projectId = Integer.parseInt(scanner.nextLine());
+
+        Project project = projectService.getProjectById(projectId);
+
+        if (project == null) {
+            System.out.println("Project not found.");
+            return;
+        }
+
+        String path = taskService.exportProjectTasksToTxt(
+                project.getId(),
+                project.getName()
+        );
+
+        System.out.println("Export completed.");
+        System.out.println("Saved to: " + path);
+    }
+
+
 }

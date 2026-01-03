@@ -1,0 +1,7 @@
+=== TASK LIST ===
+
+4 | Task 4 | HIGH | Deadline: 2026-01-25
+3 | Task 3 | HIGH | Deadline: 2026-01-04 | DONE
+5 | Task10 | HIGH | Deadline: 2026-01-09
+6 | Task11 | MEDIUM | Deadline: 2026-01-06
+7 | task12 | HIGH | Deadline: 2026-01-14
