@@ -68,12 +68,43 @@ public class ConsoleMenu {
         System.out.println("User registered successfully.");
     }
 
+    private void showUpcomingNotifications() {
+        List<TimedTask> upcoming =
+                taskService.getUpcomingTimedTasks(currentUser);
+
+        if (upcoming.isEmpty()) return;
+
+        System.out.println("\n=== UPCOMING DEADLINES ===");
+
+        for (TimedTask task : upcoming) {
+            long daysLeft = task.daysLeft();
+
+            if (task.isUrgent()) {
+                System.out.println(
+                        "⚠️  [" + daysLeft + " DAY LEFT] "
+                                + task.getTitle()
+                                + " | Deadline: " + task.getDeadline()
+                );
+            } else {
+                System.out.println(
+                        "ℹ️  [" + daysLeft + " DAYS LEFT] "
+                                + task.getTitle()
+                                + " | Deadline: " + task.getDeadline()
+                );
+            }
+        }
+    }
+
+
     /* ================= USER MENU ================= */
     private void userMenu() {
         while (true) {
+
+
             System.out.println("\n=== USER MENU ===");
             System.out.println("1. Task Menu");
             System.out.println("2. Project Menu");
+            System.out.println("3. Show Upcoming Tasks");
             System.out.println("0. Logout");
 
             String choice = scanner.nextLine();
@@ -81,6 +112,7 @@ public class ConsoleMenu {
             switch (choice) {
                 case "1" -> taskMenu();
                 case "2" -> projectMenu();
+                case "3" -> showUpcomingNotifications();
                 case "0" -> {
                     currentUser = null;
                     return;
