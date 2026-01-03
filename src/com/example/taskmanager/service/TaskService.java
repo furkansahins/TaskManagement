@@ -155,4 +155,19 @@ public class TaskService {
 
         return tasks;
     }
+
+    public List<TimedTask> getUpcomingTimedTasks(User user) {
+        List<Task> tasks = getTasksByUser(user);
+        List<TimedTask> upcoming = new ArrayList<>();
+
+        for (Task task : tasks) {
+            if (task instanceof TimedTask timedTask) {
+                if (!task.isCompleted() && timedTask.isUpcoming()) {
+                    upcoming.add(timedTask);
+                }
+            }
+        }
+        return upcoming;
+    }
+
 }

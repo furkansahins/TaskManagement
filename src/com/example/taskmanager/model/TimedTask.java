@@ -23,4 +23,21 @@ public class TimedTask extends Task {
     public long daysOverdue() {
         return ChronoUnit.DAYS.between(deadline, LocalDate.now());
     }
+
+    public long daysLeft() {
+        return java.time.temporal.ChronoUnit.DAYS.between(
+                LocalDate.now(), deadline
+        );
+    }
+
+    public boolean isUpcoming() {
+        long days = daysLeft();
+        return days >= 0 && days <= 7;
+    }
+
+    public boolean isUrgent() {
+        long days = daysLeft();
+        return days >= 0 && days <= 3;
+    }
+
 }
