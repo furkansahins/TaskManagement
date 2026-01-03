@@ -4,20 +4,14 @@ public class Task implements Completable {
 
     protected int id;
     protected String title;
-    protected String description;
     protected Priority priority;
     protected boolean completed;
-    protected User user;
 
-    public Task(int id, String title, String description,
-                Priority priority, User user) {
-
+    public Task(int id, String title, Priority priority, boolean completed) {
         this.id = id;
         this.title = title;
-        this.description = description;
         this.priority = priority;
-        this.user = user;
-        this.completed = false;
+        this.completed = completed;
     }
 
     @Override
@@ -34,10 +28,11 @@ public class Task implements Completable {
         return id;
     }
 
-    public User getUser() {
-        return user;
-    }
     public String getTitle() {
         return title;
     }
+    public Priority getPriority() {
+        return priority;
+    }
+
 }

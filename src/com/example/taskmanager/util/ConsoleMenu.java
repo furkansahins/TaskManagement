@@ -24,6 +24,7 @@ public class ConsoleMenu {
     }
 
     /* ================= MAIN MENU ================= */
+
     private void showMainMenu() {
         System.out.println("\n=== MAIN MENU ===");
         System.out.println("1. Login");
@@ -50,10 +51,10 @@ public class ConsoleMenu {
         currentUser = userService.login(username, password);
 
         if (currentUser != null) {
-            System.out.println("Login successful! Welcome, " + currentUser.getUsername());
+            System.out.println("Login successful!");
             userMenu();
         } else {
-            System.out.println("Login failed. Try again.");
+            System.out.println("Login failed.");
         }
     }
 
@@ -65,46 +66,17 @@ public class ConsoleMenu {
         String password = scanner.nextLine();
 
         userService.register(username, password);
-        System.out.println("User registered successfully.");
+        System.out.println("User registered.");
     }
-
-    private void showUpcomingNotifications() {
-        List<TimedTask> upcoming =
-                taskService.getUpcomingTimedTasks(currentUser);
-
-        if (upcoming.isEmpty()) return;
-
-        System.out.println("\n=== UPCOMING DEADLINES ===");
-
-        for (TimedTask task : upcoming) {
-            long daysLeft = task.daysLeft();
-
-            if (task.isUrgent()) {
-                System.out.println(
-                        "⚠️  [" + daysLeft + " DAY LEFT] "
-                                + task.getTitle()
-                                + " | Deadline: " + task.getDeadline()
-                );
-            } else {
-                System.out.println(
-                        "ℹ️  [" + daysLeft + " DAYS LEFT] "
-                                + task.getTitle()
-                                + " | Deadline: " + task.getDeadline()
-                );
-            }
-        }
-    }
-
 
     /* ================= USER MENU ================= */
+
     private void userMenu() {
         while (true) {
-
-
             System.out.println("\n=== USER MENU ===");
             System.out.println("1. Task Menu");
             System.out.println("2. Project Menu");
-            System.out.println("3. Show Upcoming Tasks");
+            System.out.println("3. Upcoming Deadlines");
             System.out.println("0. Logout");
 
             String choice = scanner.nextLine();
@@ -112,7 +84,7 @@ public class ConsoleMenu {
             switch (choice) {
                 case "1" -> taskMenu();
                 case "2" -> projectMenu();
-                case "3" -> showUpcomingNotifications();
+                case "3" -> showUpcomingDeadlines();
                 case "0" -> {
                     currentUser = null;
                     return;
@@ -123,6 +95,7 @@ public class ConsoleMenu {
     }
 
     /* ================= TASK MENU ================= */
+
     private void taskMenu() {
         while (true) {
             System.out.println("\n--- TASK MENU ---");
@@ -148,78 +121,67 @@ public class ConsoleMenu {
     }
 
     private void addTask() {
-        System.out.print("Title: ");
+        System.out.print("Task title: ");
         String title = scanner.nextLine();
-        taskService.createTask(title, "", Priority.MEDIUM, currentUser);
-        System.out.println("Task added.");
+
+        Priority priority = askPriority();
+
+        taskService.createTask(title, priority, currentUser.getId());
+        System.out.println("Task created.");
     }
 
     private void addTimedTask() {
-        System.out.print("Title: ");
+        System.out.print("Task title: ");
         String title = scanner.nextLine();
+
+        Priority priority = askPriority();
 
         System.out.print("Deadline (yyyy-MM-dd): ");
         LocalDate deadline = LocalDate.parse(scanner.nextLine());
 
-        taskService.createTimedTask(title, "", Priority.HIGH, currentUser, deadline);
-        System.out.println("Timed task added.");
+        taskService.createTimedTask(title, priority, currentUser.getId(), deadline);
+        System.out.println("Timed task created.");
     }
 
     private void listTasks() {
-        List<Task> tasks = taskService.getTasksByUser(currentUser);
+        List<Task> tasks = taskService.getTasksByUserId(currentUser.getId());
+
         if (tasks.isEmpty()) {
-            System.out.println("No tasks found.");
+            System.out.println("No tasks.");
             return;
         }
 
-        System.out.println("\n=== YOUR TASKS ===");
+        System.out.println("\n=== TASKS ===");
+
         for (Task task : tasks) {
-            System.out.print("ID: " + task.getId() + " | " + task.getTitle());
-            if (task instanceof TimedTask timedTask) {
-                System.out.print(" | Deadline: " + timedTask.getDeadline());
-                if (timedTask.isOverdue()) {
-                    System.out.print(" ⚠ OVERDUE (" + timedTask.daysOverdue() + " days)");
-                }
-            }
-            System.out.println(task.isCompleted() ? " ✅ Completed" : "");
+            printTask(task);
         }
     }
 
     private void completeTask() {
         listTasks();
+
         System.out.print("Enter Task ID to complete: ");
         int taskId = Integer.parseInt(scanner.nextLine());
-        Task task = taskService.getTasksByUser(currentUser).stream()
-                .filter(t -> t.getId() == taskId)
-                .findFirst()
-                .orElse(null);
 
-        if (task != null) {
-            taskService.completeTask(task);
-            System.out.println("Task marked as completed.");
-        } else {
-            System.out.println("Invalid Task ID.");
-        }
+        boolean success = taskService.completeTask(taskId, currentUser.getId());
+
+        System.out.println(success ? "Task completed." : "Task not found.");
     }
 
     private void deleteTask() {
         listTasks();
+
         System.out.print("Enter Task ID to delete: ");
         int taskId = Integer.parseInt(scanner.nextLine());
-        Task task = taskService.getTasksByUser(currentUser).stream()
-                .filter(t -> t.getId() == taskId)
-                .findFirst()
-                .orElse(null);
 
-        if (task != null) {
-            taskService.deleteTask(task);
-            System.out.println("Task deleted.");
-        } else {
-            System.out.println("Invalid Task ID.");
-        }
+        boolean success = taskService.deleteTask(taskId, currentUser.getId());
+
+        System.out.println(success ? "Task deleted." : "Task not found.");
     }
 
     /* ================= PROJECT MENU ================= */
+
     private void projectMenu() {
         while (true) {
             System.out.println("\n--- PROJECT MENU ---");
@@ -244,113 +206,144 @@ public class ConsoleMenu {
 
     private void createProject() {
         System.out.print("Project name: ");
-        String name = scanner.nextLine();
-        projectService.createProject(name, currentUser);
+        String projectName = scanner.nextLine();
+
+        projectService.createProject(projectName, currentUser.getId());
         System.out.println("Project created.");
     }
 
     private void listProjects() {
-        List<Project> projects = projectService.getProjectsByUser(currentUser);
+        List<Project> projects =
+                projectService.getProjectsByUser(currentUser.getId());
+
         if (projects.isEmpty()) {
-            System.out.println("No projects found.");
+            System.out.println("No projects.");
             return;
         }
 
-        System.out.println("\n=== YOUR PROJECTS ===");
-        for (Project project : projects) {
-            System.out.println("- " + project.getName());
+        System.out.println("\n=== PROJECTS ===");
 
-            // Project altındaki taskleri getir
-            List<Task> tasksInProject = taskService.getTasksByProject(project.getId());
-            if (tasksInProject.isEmpty()) {
-                System.out.println("   (No tasks)");
-            } else {
-                for (Task task : tasksInProject) {
-                    System.out.print(task.getId() + " | " + task.getTitle());
-                    if (task instanceof TimedTask timedTask) {
-                        System.out.print(" | Deadline: " + timedTask.getDeadline());
-                        if (timedTask.isOverdue()) {
-                            System.out.print(" ⚠ OVERDUE (" + timedTask.daysOverdue() + " days)");
-                        }
-                    }
-                    System.out.println(task.isCompleted() ? " ✅ Completed" : "");
-                }
+        for (Project project : projects) {
+            System.out.println(project.getId() + " | " + project.getName());
+
+            List<Task> tasks =
+                    taskService.getTasksByProject(project.getId());
+
+            for (Task task : tasks) {
+                System.out.print("   - ");
+                printTask(task);
             }
         }
     }
 
     private void assignTaskToProject() {
-        List<Project> projects = projectService.getProjectsByUser(currentUser);
-        if (projects.isEmpty()) {
-            System.out.println("No projects available.");
-            return;
-        }
+        listProjects();
 
-        System.out.println("\n=== PROJECTS ===");
-        for (Project project : projects) {
-            System.out.println(project.getId() + " | " + project.getName());
-        }
-
-        System.out.print("Enter Project ID to assign task: ");
+        System.out.print("Enter Project ID: ");
         int projectId = Integer.parseInt(scanner.nextLine());
-        Project project = projects.stream()
-                .filter(p -> p.getId() == projectId)
-                .findFirst()
-                .orElse(null);
 
-        if (project == null) {
-            System.out.println("Project not found.");
-            return;
-        }
+        listTasks();
 
-        List<Task> tasks = taskService.getTasksByUser(currentUser);
-        if (tasks.isEmpty()) {
-            System.out.println("No tasks to assign.");
-            return;
-        }
-
-        System.out.println("\n=== TASKS ===");
-        for (Task task : tasks) {
-            System.out.print(task.getId() + " | " + task.getTitle());
-            if (task instanceof TimedTask timedTask) {
-                System.out.print(" | Deadline: " + timedTask.getDeadline());
-            }
-            System.out.println(task.isCompleted() ? " ✅ Completed" : "");
-        }
-
-        System.out.print("Enter Task ID to assign to project: ");
+        System.out.print("Enter Task ID: ");
         int taskId = Integer.parseInt(scanner.nextLine());
-        Task task = tasks.stream().filter(t -> t.getId() == taskId).findFirst().orElse(null);
 
-        if (task != null) {
-            projectService.addTaskToProject(project, task);
-            System.out.println("Task assigned to project.");
-        } else {
-            System.out.println("Invalid Task ID.");
-        }
+        boolean success =
+                projectService.assignTaskToProject(projectId, taskId, currentUser.getId());
+
+        System.out.println(success ? "Task assigned." : "Assignment failed.");
     }
 
     private void deleteProject() {
-        List<Project> projects = projectService.getProjectsByUser(currentUser);
-        if (projects.isEmpty()) return;
-
-        System.out.println("\n=== PROJECTS ===");
-        for (Project project : projects) {
-            System.out.println(project.getId() + " | " + project.getName());
-        }
+        listProjects();
 
         System.out.print("Enter Project ID to delete: ");
         int projectId = Integer.parseInt(scanner.nextLine());
-        Project project = projects.stream()
-                .filter(p -> p.getId() == projectId)
-                .findFirst()
-                .orElse(null);
 
-        if (project != null) {
-            projectService.deleteProject(project);
-            System.out.println("Project deleted.");
-        } else {
-            System.out.println("Invalid Project ID.");
+        boolean success =
+                projectService.deleteProject(projectId, currentUser.getId());
+
+        System.out.println(success ? "Project deleted." : "Project not found.");
+    }
+
+    /* ================= UPCOMING DEADLINES ================= */
+
+    private void showUpcomingDeadlines() {
+        List<TimedTask> tasks =
+                taskService.getUpcomingTimedTasks(currentUser.getId());
+
+        if (tasks.isEmpty()) {
+            System.out.println("No upcoming deadlines.");
+            return;
         }
+
+        System.out.println("\n=== UPCOMING DEADLINES ===");
+
+        for (TimedTask task : tasks) {
+            long daysLeft = task.daysLeft();
+
+            if (daysLeft <= 3) {
+                System.out.println("⚠ " + task.getTitle()
+                        + " | Deadline: " + task.getDeadline()
+                        + " (" + daysLeft + " days left)");
+            } else {
+                System.out.println("ℹ " + task.getTitle()
+                        + " | Deadline: " + task.getDeadline()
+                        + " (" + daysLeft + " days left)");
+            }
+        }
+    }
+
+    /* ================= HELPERS ================= */
+
+    private Priority askPriority() {
+        while (true) {
+            System.out.println("Priority:");
+            System.out.println("1 - LOW");
+            System.out.println("2 - MEDIUM");
+            System.out.println("3 - HIGH");
+            System.out.print("Choice: ");
+
+            String input = scanner.nextLine().trim();
+
+            if (input.isEmpty()) {
+                return null; // ENTER → priority yok
+            }
+
+            switch (input) {
+                case "1":
+                    return Priority.LOW;
+                case "2":
+                    return Priority.MEDIUM;
+                case "3":
+                    return Priority.HIGH;
+                default:
+                    System.out.println("Invalid choice.");
+            }
+        }
+    }
+
+
+
+    private void printTask(Task task) {
+        System.out.print(
+                task.getId()
+                        + " | " + task.getTitle()
+                        + (task.getPriority() != null ? " | " + task.getPriority() : "")
+
+        );
+
+        if (task instanceof TimedTask timedTask) {
+            System.out.print(" | Deadline: " + timedTask.getDeadline());
+
+            if (timedTask.isOverdue()) {
+                System.out.print(" ⚠ OVERDUE");
+            }
+        }
+
+        if (task.isCompleted()) {
+            System.out.print(" ✅ DONE");
+        }
+
+        System.out.println();
     }
 }

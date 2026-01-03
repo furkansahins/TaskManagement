@@ -1,5 +1,6 @@
 package com.example.taskmanager.model;
 
+
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
@@ -7,8 +8,13 @@ public class TimedTask extends Task {
 
     private LocalDate deadline;
 
-    public TimedTask(int id, String title, String description, Priority priority, User user, LocalDate deadline) {
-        super(id, title, description, priority, user);
+    public TimedTask(int id,
+                     String title,
+                     Priority priority,
+                     boolean completed,
+                     LocalDate deadline) {
+
+        super(id, title, priority, completed);
         this.deadline = deadline;
     }
 
@@ -16,19 +22,19 @@ public class TimedTask extends Task {
         return deadline;
     }
 
+    public long daysLeft() {
+        return ChronoUnit.DAYS.between(LocalDate.now(), deadline);
+    }
+
     public boolean isOverdue() {
         return !completed && deadline.isBefore(LocalDate.now());
     }
 
     public long daysOverdue() {
+        if (!isOverdue()) return 0;
         return ChronoUnit.DAYS.between(deadline, LocalDate.now());
     }
 
-    public long daysLeft() {
-        return java.time.temporal.ChronoUnit.DAYS.between(
-                LocalDate.now(), deadline
-        );
-    }
 
     public boolean isUpcoming() {
         long days = daysLeft();
@@ -39,5 +45,4 @@ public class TimedTask extends Task {
         long days = daysLeft();
         return days >= 0 && days <= 3;
     }
-
 }

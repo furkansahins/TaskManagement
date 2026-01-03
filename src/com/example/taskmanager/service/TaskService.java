@@ -3,116 +3,82 @@ package com.example.taskmanager.service;
 import com.example.taskmanager.Database.DatabaseConnection;
 import com.example.taskmanager.model.*;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TaskService {
 
-    public void createTask(String title, String description, Priority priority, User user) {
-        String sql = "INSERT INTO tasks (title, description, priority, user_id) VALUES (?, ?, ?, ?)";
+    /* ================= CREATE ================= */
+
+    public void createTask(String title, Priority priority, int userId) {
+        String sql = """
+            INSERT INTO tasks (title, priority, completed, user_id)
+            VALUES (?, ?, false, ?)
+        """;
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, title);
-            ps.setString(2, description);
-            ps.setString(3, priority.name());
-            ps.setInt(4, user.getId());
+            ps.setString(2, priority.name());
+            ps.setInt(3, userId);
             ps.executeUpdate();
 
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public void createTimedTask(String title, String description, Priority priority, User user, LocalDate deadline) {
-        String sql = "INSERT INTO tasks (title, description, priority, user_id, deadline) VALUES (?, ?, ?, ?, ?)";
+    public void createTimedTask(String title, Priority priority, int userId, LocalDate deadline) {
+        String sql = """
+            INSERT INTO tasks (title, priority, completed, user_id, deadline)
+            VALUES (?, ?, false, ?, ?)
+        """;
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, title);
-            ps.setString(2, description);
-            ps.setString(3, priority.name());
-            ps.setInt(4, user.getId());
-            ps.setDate(5, java.sql.Date.valueOf(deadline));
+            ps.setString(2, priority.name());
+            ps.setInt(3, userId);
+            ps.setDate(4, Date.valueOf(deadline));
             ps.executeUpdate();
 
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public List<Task> getTasksByUser(User user) {
+    /* ================= LIST ================= */
+
+    public List<Task> getTasksByUserId(int userId) {
         List<Task> tasks = new ArrayList<>();
-        String sql = "SELECT * FROM tasks WHERE user_id = ? ORDER BY id";
+
+        String sql = "SELECT * FROM tasks WHERE user_id = ?";
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setInt(1, user.getId());
+            ps.setInt(1, userId);
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                LocalDate deadline = rs.getDate("deadline") != null ? rs.getDate("deadline").toLocalDate() : null;
-                if (deadline != null) {
-                    tasks.add(new TimedTask(rs.getInt("id"),
-                            rs.getString("title"),
-                            rs.getString("description"),
-                            Priority.valueOf(rs.getString("priority")),
-                            user,
-                            deadline));
-                } else {
-                    tasks.add(new Task(rs.getInt("id"),
-                            rs.getString("title"),
-                            rs.getString("description"),
-                            Priority.valueOf(rs.getString("priority")),
-                            user));
-                }
+                tasks.add(mapTask(rs));
             }
 
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return tasks;
     }
 
-    public void completeTask(Task task) {
-        String sql = "UPDATE tasks SET completed = true WHERE id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, task.getId());
-            ps.executeUpdate();
-            task.complete();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void deleteTask(Task task) {
-        String sql = "DELETE FROM tasks WHERE id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, task.getId());
-            ps.executeUpdate();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
     public List<Task> getTasksByProject(int projectId) {
-
         List<Task> tasks = new ArrayList<>();
 
-        String sql = """
-        SELECT * FROM tasks
-        WHERE project_id = ?
-        ORDER BY id
-        """;
+        String sql = "SELECT * FROM tasks WHERE project_id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -121,53 +87,106 @@ public class TaskService {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-
-                LocalDate deadline =
-                        rs.getDate("deadline") != null
-                                ? rs.getDate("deadline").toLocalDate()
-                                : null;
-
-                User user = new User(rs.getInt("user_id"), "", "");
-
-                if (deadline != null) {
-                    tasks.add(new TimedTask(
-                            rs.getInt("id"),
-                            rs.getString("title"),
-                            rs.getString("description"),
-                            Priority.valueOf(rs.getString("priority")),
-                            user,
-                            deadline
-                    ));
-                } else {
-                    tasks.add(new Task(
-                            rs.getInt("id"),
-                            rs.getString("title"),
-                            rs.getString("description"),
-                            Priority.valueOf(rs.getString("priority")),
-                            user
-                    ));
-                }
+                tasks.add(mapTask(rs));
             }
 
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
 
         return tasks;
     }
 
-    public List<TimedTask> getUpcomingTimedTasks(User user) {
-        List<Task> tasks = getTasksByUser(user);
+    /* ================= COMPLETE ================= */
+
+    public boolean completeTask(int taskId, int userId) {
+        String sql = """
+            UPDATE tasks
+            SET completed = true
+            WHERE id = ? AND user_id = ?
+        """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, taskId);
+            ps.setInt(2, userId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /* ================= DELETE ================= */
+
+    public boolean deleteTask(int taskId, int userId) {
+        String sql = "DELETE FROM tasks WHERE id = ? AND user_id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, taskId);
+            ps.setInt(2, userId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /* ================= UPCOMING ================= */
+
+    public List<TimedTask> getUpcomingTimedTasks(int userId) {
+
+        List<Task> tasks = getTasksByUserId(userId);
         List<TimedTask> upcoming = new ArrayList<>();
 
         for (Task task : tasks) {
             if (task instanceof TimedTask timedTask) {
-                if (!task.isCompleted() && timedTask.isUpcoming()) {
-                    upcoming.add(timedTask);
+                if (!timedTask.isCompleted() && timedTask.isUpcoming()) {
+                    upcoming.add(timedTask); // ✅
                 }
             }
         }
         return upcoming;
     }
+
+
+    /* ================= MAPPER ================= */
+
+    private Task mapTask(ResultSet rs) throws SQLException {
+
+        int id = rs.getInt("id");
+        String title = rs.getString("title");
+        Priority priority = Priority.valueOf(rs.getString("priority"));
+        boolean completed = rs.getBoolean("completed");
+
+        java.sql.Date sqlDeadline = rs.getDate("deadline");
+
+        if (sqlDeadline != null) {
+            return new TimedTask(
+                    id,
+                    title,
+                    priority,
+                    completed,
+                    sqlDeadline.toLocalDate()
+            );
+        }
+
+        return new Task(
+                id,
+                title,
+                priority,
+                completed
+        );
+    }
+
 
 }

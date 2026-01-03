@@ -1,26 +1,19 @@
 package com.example.taskmanager.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Project {
 
     private int id;
     private String name;
-    private User owner;
-    private List<Task> tasks = new ArrayList<>();
-    public Project(int id, String name, User owner) {
+    private int ownerId;
+
+    public Project(int id, String name, int ownerId) {
         this.id = id;
         this.name = name;
-        this.owner = owner;
+        this.ownerId = ownerId;
     }
 
     public int getId() {
         return id;
-    }
-
-    public User getOwner() {
-        return owner;
     }
 
     public String getName() {
