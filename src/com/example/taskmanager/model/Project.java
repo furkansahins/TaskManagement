@@ -19,4 +19,9 @@ public class Project {
     public String getName() {
         return name;
     }
+
+    public int getOwnerId() {
+        return ownerId;
+    }
+
 }
