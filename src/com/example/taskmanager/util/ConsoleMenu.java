@@ -43,10 +43,15 @@ public class ConsoleMenu {
 
     private void login() {
         System.out.print("Username: ");
-        String username = scanner.nextLine();
+        String username = scanner.nextLine().trim();
 
         System.out.print("Password: ");
-        String password = scanner.nextLine();
+        String password = scanner.nextLine().trim();
+
+        if (username.isEmpty() || password.isEmpty()) {
+            System.out.println("Username and password cannot be empty.");
+            return;
+        }
 
         currentUser = userService.login(username, password);
 
@@ -60,10 +65,15 @@ public class ConsoleMenu {
 
     private void register() {
         System.out.print("Username: ");
-        String username = scanner.nextLine();
+        String username = scanner.nextLine().trim();
 
         System.out.print("Password: ");
-        String password = scanner.nextLine();
+        String password = scanner.nextLine().trim();
+
+        if (username.isEmpty() || password.isEmpty()) {
+            System.out.println("Username and password cannot be empty.");
+            return;
+        }
 
         userService.register(username, password);
         System.out.println("User registered.");
@@ -122,25 +132,38 @@ public class ConsoleMenu {
 
     private void addTask() {
         System.out.print("Task title: ");
-        String title = scanner.nextLine();
+        String title = scanner.nextLine().trim();
+
+        if (title.isEmpty()) {
+            System.out.println("Title cannot be empty.");
+            return;
+        }
 
         Priority priority = askPriority();
-
         taskService.createTask(title, priority, currentUser.getId());
         System.out.println("Task created.");
     }
 
     private void addTimedTask() {
-        System.out.print("Task title: ");
-        String title = scanner.nextLine();
+        try {
+            System.out.print("Task title: ");
+            String title = scanner.nextLine().trim();
+            if (title.isEmpty()) {
+                System.out.println("Title cannot be empty.");
+                return;
+            }
 
-        Priority priority = askPriority();
+            Priority priority = askPriority();
 
-        System.out.print("Deadline (yyyy-MM-dd): ");
-        LocalDate deadline = LocalDate.parse(scanner.nextLine());
+            System.out.print("Deadline (yyyy-MM-dd): ");
+            LocalDate deadline = LocalDate.parse(scanner.nextLine().trim());
 
-        taskService.createTimedTask(title, priority, currentUser.getId(), deadline);
-        System.out.println("Timed task created.");
+            taskService.createTimedTask(title, priority, currentUser.getId(), deadline);
+            System.out.println("Timed task created.");
+
+        } catch (Exception e) {
+            System.out.println("Invalid date format.");
+        }
     }
 
     private void listTasks() {
@@ -152,32 +175,37 @@ public class ConsoleMenu {
         }
 
         System.out.println("\n=== TASKS ===");
-
-        for (Task task : tasks) {
-            printTask(task);
-        }
+        tasks.forEach(this::printTask);
     }
 
     private void completeTask() {
         listTasks();
 
-        System.out.print("Enter Task ID to complete: ");
-        int taskId = Integer.parseInt(scanner.nextLine());
+        try {
+            System.out.print("Enter Task ID to complete: ");
+            int taskId = Integer.parseInt(scanner.nextLine().trim());
 
-        boolean success = taskService.completeTask(taskId, currentUser.getId());
+            boolean success = taskService.completeTask(taskId, currentUser.getId());
+            System.out.println(success ? "Task completed." : "Task not found.");
 
-        System.out.println(success ? "Task completed." : "Task not found.");
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid Task ID.");
+        }
     }
 
     private void deleteTask() {
         listTasks();
 
-        System.out.print("Enter Task ID to delete: ");
-        int taskId = Integer.parseInt(scanner.nextLine());
+        try {
+            System.out.print("Enter Task ID to delete: ");
+            int taskId = Integer.parseInt(scanner.nextLine().trim());
 
-        boolean success = taskService.deleteTask(taskId, currentUser.getId());
+            boolean success = taskService.deleteTask(taskId, currentUser.getId());
+            System.out.println(success ? "Task deleted." : "Task not found.");
 
-        System.out.println(success ? "Task deleted." : "Task not found.");
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid Task ID.");
+        }
     }
 
     /* ================= PROJECT MENU ================= */
@@ -188,6 +216,7 @@ public class ConsoleMenu {
             System.out.println("1. Create Project");
             System.out.println("2. List Projects");
             System.out.println("3. Assign Task to Project");
+            System.out.println("6. Complete Project Task");
             System.out.println("4. Delete Project");
             System.out.println("5. Export Tasks (TXT)");
             System.out.println("0. Back");
@@ -200,6 +229,7 @@ public class ConsoleMenu {
                 case "3" -> assignTaskToProject();
                 case "4" -> deleteProject();
                 case "5" -> exportProjectTasks();
+                case "6" -> completeProjectTask();
                 case "0" -> { return; }
                 default -> System.out.println("Invalid choice.");
             }
@@ -208,15 +238,19 @@ public class ConsoleMenu {
 
     private void createProject() {
         System.out.print("Project name: ");
-        String projectName = scanner.nextLine();
+        String name = scanner.nextLine().trim();
 
-        projectService.createProject(projectName, currentUser.getId());
+        if (name.isEmpty()) {
+            System.out.println("Project name cannot be empty.");
+            return;
+        }
+
+        projectService.createProject(name, currentUser.getId());
         System.out.println("Project created.");
     }
 
     private void listProjects() {
-        List<Project> projects =
-                projectService.getProjectsByUser(currentUser.getId());
+        List<Project> projects = projectService.getProjectsByUser(currentUser.getId());
 
         if (projects.isEmpty()) {
             System.out.println("No projects.");
@@ -228,10 +262,7 @@ public class ConsoleMenu {
         for (Project project : projects) {
             System.out.println(project.getId() + " | " + project.getName());
 
-            List<Task> tasks =
-                    taskService.getTasksByProject(project.getId());
-
-            for (Task task : tasks) {
+            for (Task task : taskService.getTasksByProject(project.getId())) {
                 System.out.print("   - ");
                 printTask(task);
             }
@@ -241,37 +272,73 @@ public class ConsoleMenu {
     private void assignTaskToProject() {
         listProjects();
 
-        System.out.print("Enter Project ID: ");
-        int projectId = Integer.parseInt(scanner.nextLine());
+        try {
+            System.out.print("Enter Project ID: ");
+            int projectId = Integer.parseInt(scanner.nextLine().trim());
 
-        listTasks();
+            listTasks();
 
-        System.out.print("Enter Task ID: ");
-        int taskId = Integer.parseInt(scanner.nextLine());
+            System.out.print("Enter Task ID: ");
+            int taskId = Integer.parseInt(scanner.nextLine().trim());
 
-        boolean success =
-                projectService.assignTaskToProject(projectId, taskId, currentUser.getId());
+            boolean success =
+                    projectService.assignTaskToProject(projectId, taskId, currentUser.getId());
 
-        System.out.println(success ? "Task assigned." : "Assignment failed.");
+            System.out.println(success ? "Task assigned." : "Assignment failed.");
+
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid ID input.");
+        }
     }
 
     private void deleteProject() {
         listProjects();
 
-        System.out.print("Enter Project ID to delete: ");
-        int projectId = Integer.parseInt(scanner.nextLine());
+        try {
+            System.out.print("Enter Project ID to delete: ");
+            int projectId = Integer.parseInt(scanner.nextLine().trim());
 
-        boolean success =
-                projectService.deleteProject(projectId, currentUser.getId());
+            boolean success =
+                    projectService.deleteProject(projectId, currentUser.getId());
 
-        System.out.println(success ? "Project deleted." : "Project not found.");
+            System.out.println(success ? "Project deleted." : "Project not found.");
+
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid Project ID.");
+        }
     }
 
-    /* ================= UPCOMING DEADLINES ================= */
+    private void exportProjectTasks() {
+        listProjects();
+
+        try {
+            System.out.print("Enter Project ID: ");
+            int projectId = Integer.parseInt(scanner.nextLine().trim());
+
+            Project project = projectService.getProjectById(projectId);
+
+            if (project == null) {
+                System.out.println("Project not found.");
+                return;
+            }
+
+            String path = taskService.exportProjectTasksToTxt(
+                    project.getId(),
+                    project.getName()
+            );
+
+            System.out.println("Export completed.");
+            System.out.println("Saved to: " + path);
+
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid Project ID.");
+        }
+    }
+
+    /* ================= DEADLINES ================= */
 
     private void showUpcomingDeadlines() {
-        List<TimedTask> tasks =
-                taskService.getUpcomingTimedTasks(currentUser.getId());
+        List<TimedTask> tasks = taskService.getUpcomingTimedTasks(currentUser.getId());
 
         if (tasks.isEmpty()) {
             System.out.println("No upcoming deadlines.");
@@ -282,16 +349,9 @@ public class ConsoleMenu {
 
         for (TimedTask task : tasks) {
             long daysLeft = task.daysLeft();
-
-            if (daysLeft <= 3) {
-                System.out.println("⚠ " + task.getTitle()
-                        + " | Deadline: " + task.getDeadline()
-                        + " (" + daysLeft + " days left)");
-            } else {
-                System.out.println("ℹ " + task.getTitle()
-                        + " | Deadline: " + task.getDeadline()
-                        + " (" + daysLeft + " days left)");
-            }
+            System.out.println(task.getTitle()
+                    + " | " + task.getDeadline()
+                    + " (" + daysLeft + " days left)");
         }
     }
 
@@ -307,40 +367,33 @@ public class ConsoleMenu {
 
             String input = scanner.nextLine().trim();
 
-            if (input.isEmpty()) {
-                return null; // ENTER → priority yok
-            }
+            if (input.isEmpty()) return null;
 
             switch (input) {
-                case "1":
-                    return Priority.LOW;
-                case "2":
-                    return Priority.MEDIUM;
-                case "3":
-                    return Priority.HIGH;
-                default:
-                    System.out.println("Invalid choice.");
+                case "1": return Priority.LOW;
+                case "2": return Priority.MEDIUM;
+                case "3": return Priority.HIGH;
+                default: System.out.println("Invalid choice.");
             }
         }
     }
 
-
-
     private void printTask(Task task) {
-        System.out.print(
-                task.getId()
-                        + " | " + task.getTitle()
-                        + (task.getPriority() != null ? " | " + task.getPriority() : "")
+        System.out.print(task.getId() + " | " + task.getTitle());
 
-        );
+        if (task.getPriority() != null) {
+            System.out.print(" | " + task.getPriority());
+        }
 
         if (task instanceof TimedTask timedTask) {
-            System.out.print(" | Deadline: " + timedTask.getDeadline());
+            System.out.print(" | Deadline: " +
+                    timedTask.getDeadline().getDate());
 
             if (timedTask.isOverdue()) {
                 System.out.print(" ⚠ OVERDUE");
             }
         }
+
 
         if (task.isCompleted()) {
             System.out.print(" ✅ DONE");
@@ -348,27 +401,36 @@ public class ConsoleMenu {
 
         System.out.println();
     }
-    private void exportProjectTasks() {
+    private void completeProjectTask() {
         listProjects();
 
-        System.out.print("Enter Project ID: ");
-        int projectId = Integer.parseInt(scanner.nextLine());
+        try {
+            System.out.print("Enter Project ID: ");
+            int projectId = Integer.parseInt(scanner.nextLine().trim());
 
-        Project project = projectService.getProjectById(projectId);
+            List<Task> tasks = taskService.getTasksByProject(projectId);
 
-        if (project == null) {
-            System.out.println("Project not found.");
-            return;
+            if (tasks.isEmpty()) {
+                System.out.println("No tasks in this project.");
+                return;
+            }
+
+            System.out.println("\n--- PROJECT TASKS ---");
+            for (Task task : tasks) {
+                printTask(task);
+            }
+
+            System.out.print("Enter Task ID to complete: ");
+            int taskId = Integer.parseInt(scanner.nextLine().trim());
+
+            boolean success =
+                    taskService.completeTask(taskId, currentUser.getId());
+
+            System.out.println(success ? "Task completed." : "Task not found.");
+
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input.");
         }
-
-        String path = taskService.exportProjectTasksToTxt(
-                project.getId(),
-                project.getName()
-        );
-
-        System.out.println("Export completed.");
-        System.out.println("Saved to: " + path);
     }
-
 
 }

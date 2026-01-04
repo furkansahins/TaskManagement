@@ -17,9 +17,13 @@ public class TaskService {
 
     public void createTask(String title, Priority priority, int userId) {
         String sql = """
-            INSERT INTO tasks (title, priority, completed, user_id)
-            VALUES (?, ?, false, ?)
-        """;
+        INSERT INTO tasks (title, priority, completed, user_id)
+        VALUES (?, ?, false, ?)
+    """;
+
+        if (priority == null) {
+            priority = Priority.LOW; // ✅ DEFAULT
+        }
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -34,11 +38,21 @@ public class TaskService {
         }
     }
 
-    public void createTimedTask(String title, Priority priority, int userId, LocalDate deadline) {
+
+
+    public void createTimedTask(String title,
+                                Priority priority,
+                                int userId,
+                                LocalDate deadline) {
+
         String sql = """
-            INSERT INTO tasks (title, priority, completed, user_id, deadline)
-            VALUES (?, ?, false, ?, ?)
-        """;
+        INSERT INTO tasks (title, priority, completed, user_id, deadline)
+        VALUES (?, ?, false, ?, ?)
+    """;
+
+        if (priority == null) {
+            priority = Priority.LOW; // ✅ DEFAULT
+        }
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -53,6 +67,8 @@ public class TaskService {
             e.printStackTrace();
         }
     }
+
+
 
     /* ================= LIST ================= */
 
@@ -168,10 +184,13 @@ public class TaskService {
 
         int id = rs.getInt("id");
         String title = rs.getString("title");
-        Priority priority = Priority.valueOf(rs.getString("priority"));
+        Priority priority = rs.getString("priority") != null
+                ? Priority.valueOf(rs.getString("priority"))
+                : Priority.LOW;
+
         boolean completed = rs.getBoolean("completed");
 
-        java.sql.Date sqlDeadline = rs.getDate("deadline");
+        Date sqlDeadline = rs.getDate("deadline");
 
         if (sqlDeadline != null) {
             return new TimedTask(
@@ -179,17 +198,13 @@ public class TaskService {
                     title,
                     priority,
                     completed,
-                    sqlDeadline.toLocalDate()
+                    new Deadline(sqlDeadline.toLocalDate())
             );
         }
 
-        return new Task(
-                id,
-                title,
-                priority,
-                completed
-        );
+        return new Task(id, title, priority, completed);
     }
+
     public String exportProjectTasksToTxt(int projectId, String projectName) {
 
         List<Task> tasks = getTasksByProject(projectId);
