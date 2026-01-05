@@ -6,6 +6,7 @@ import com.example.taskmanager.model.Project;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 /**
@@ -18,21 +19,28 @@ public class ProjectService {
      * @param name proje adı
      * @param ownerId projeyi oluşturan kullanıcı
      */
-    public void createProject(String name, int ownerId) {
+    public boolean createProject(String name, int ownerId) {
 
-        String sql = "INSERT INTO projects(name, owner_id) VALUES (?, ?)";
+        String sql = """
+        INSERT INTO projects (name, owner_id)
+        VALUES (?, ?)
+    """;
 
-        try (Connection c = DatabaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, name);
             ps.setInt(2, ownerId);
             ps.executeUpdate();
+            return true;
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            // duplicate project
+            return false;
         }
     }
+
+
     /**
      * Belirtilen projeyi siler.
      *
@@ -133,5 +141,11 @@ public class ProjectService {
         }
         return false;
     }
+
+
+
+
+
+
 
 }

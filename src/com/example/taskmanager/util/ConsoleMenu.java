@@ -209,20 +209,19 @@ public class ConsoleMenu {
             System.out.println("1. Create Project");
             System.out.println("2. List Projects");
             System.out.println("3. Assign Task to Project");
-            System.out.println("6. Complete Project Task");
-            System.out.println("4. Delete Project");
-            System.out.println("5. Export Tasks (TXT)");
+            System.out.println("4. Complete Project Task");
+            System.out.println("5. Delete Project");
+            System.out.println("6. Export Tasks (TXT)");
             System.out.println("0. Back");
-
             String choice = scanner.nextLine();
 
             switch (choice) {
                 case "1" -> createProject();
                 case "2" -> listProjects();
                 case "3" -> assignTaskToProject();
-                case "4" -> deleteProject();
-                case "5" -> exportProjectTasks();
-                case "6" -> completeProjectTask();
+                case "4" -> completeProjectTask();
+                case "5" -> deleteProject();
+                case "6" -> exportProjectTasks();
                 case "0" -> { return; }
                 default -> System.out.println("Invalid choice.");
             }
@@ -231,16 +230,16 @@ public class ConsoleMenu {
 
     private void createProject() {
         System.out.print("Project name: ");
-        String name = scanner.nextLine().trim();
+        String projectName = scanner.nextLine();
 
-        if (name.isEmpty()) {
-            System.out.println("Project name cannot be empty.");
-            return;
-        }
+        boolean success =
+                projectService.createProject(projectName, currentUser.getId());
 
-        projectService.createProject(name, currentUser.getId());
-        System.out.println("Project created.");
+        System.out.println(success
+                ? "Project created."
+                : "Project already exists.");
     }
+
 
     private void listProjects() {
         List<Project> projects = projectService.getProjectsByUser(currentUser.getId());
