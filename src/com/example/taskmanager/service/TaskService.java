@@ -12,8 +12,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TaskService {
-
-    /* ================= CREATE ================= */
+    /**
+     * Kullanıcıya ait yeni bir görev oluşturur.
+     *
+     * @param title görev başlığı
+     * @param priority görev önceliği (null olabilir)
+     * @param userId görevi oluşturan kullanıcı
+     */
 
     public void createTask(String title, Priority priority, int userId) {
         String sql = """
@@ -37,9 +42,14 @@ public class TaskService {
             e.printStackTrace();
         }
     }
-
-
-
+    /**
+     * Zaman sınırlı (deadline'lı) bir görev oluşturur.
+     *
+     * @param title görev başlığı
+     * @param priority görev önceliği
+     * @param userId kullanıcı id
+     * @param deadline görevin son tarihi
+     */
     public void createTimedTask(String title,
                                 Priority priority,
                                 int userId,
@@ -67,10 +77,6 @@ public class TaskService {
             e.printStackTrace();
         }
     }
-
-
-
-    /* ================= LIST ================= */
 
     public List<Task> getTasksByUserId(int userId) {
         List<Task> tasks = new ArrayList<>();
@@ -116,8 +122,13 @@ public class TaskService {
         return tasks;
     }
 
-    /* ================= COMPLETE ================= */
-
+    /**
+     * Belirtilen görevi tamamlandı olarak işaretler.
+     *
+     * @param taskId tamamlanacak görev id
+     * @param userId işlemi yapan kullanıcı
+     * @return işlem başarılıysa true, değilse false
+     */
     public boolean completeTask(int taskId, int userId) {
         String sql = """
             UPDATE tasks
@@ -140,8 +151,13 @@ public class TaskService {
         return false;
     }
 
-    /* ================= DELETE ================= */
-
+    /**
+     * Belirtilen görevi siler.
+     *
+     * @param taskId silinecek görev
+     * @param userId işlemi yapan kullanıcı
+     * @return silme başarılıysa true
+     */
     public boolean deleteTask(int taskId, int userId) {
         String sql = "DELETE FROM tasks WHERE id = ? AND user_id = ?";
 
@@ -160,17 +176,15 @@ public class TaskService {
         return false;
     }
 
-    /* ================= UPCOMING ================= */
 
     public List<TimedTask> getUpcomingTimedTasks(int userId) {
-
         List<Task> tasks = getTasksByUserId(userId);
         List<TimedTask> upcoming = new ArrayList<>();
 
         for (Task task : tasks) {
             if (task instanceof TimedTask timedTask) {
-                if (!timedTask.isCompleted() && timedTask.isUpcoming()) {
-                    upcoming.add(timedTask); // ✅
+                if (timedTask.getDeadline().isUpcoming(7)) {
+                    upcoming.add(timedTask);
                 }
             }
         }
@@ -178,7 +192,7 @@ public class TaskService {
     }
 
 
-    /* ================= MAPPER ================= */
+
 
     private Task mapTask(ResultSet rs) throws SQLException {
 
@@ -204,7 +218,13 @@ public class TaskService {
 
         return new Task(id, title, priority, completed);
     }
-
+    /**
+     * Bir projeye ait görevleri TXT dosyası olarak dışa aktarır.
+     *
+     * @param projectId proje id
+     * @param projectName proje adı
+     * @return oluşturulan dosyanın tam yolu
+     */
     public String exportProjectTasksToTxt(int projectId, String projectName) {
 
         List<Task> tasks = getTasksByProject(projectId);

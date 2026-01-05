@@ -1,5 +1,7 @@
 package com.example.taskmanager.model;
-
+/**
+ * Kullanıcıya ait projeleri temsil eder.
+ */
 public class Project {
 
     private int id;
@@ -19,7 +21,9 @@ public class Project {
     public String getName() {
         return name;
     }
-
+    /**
+     * @return projeyi oluşturan kullanıcının id bilgisi
+     */
     public int getOwnerId() {
         return ownerId;
     }

@@ -6,6 +6,13 @@ import com.example.taskmanager.model.User;
 import java.sql.*;
 
 public class UserService {
+    /**
+     * Kullanıcının sisteme giriş yapmasını sağlar.
+     *
+     * @param username kullanıcı adı
+     * @param password kullanıcı şifresi
+     * @return giriş başarılıysa kullanıcı, değilse null
+     */
 
     public User login(String username, String password) {
         String sql = "SELECT * FROM users WHERE username=? AND password=?";
@@ -30,6 +37,13 @@ public class UserService {
         return null;
     }
 
+    /**
+     * Kullanıcının sisteme kayıt yapmasını sağlar.
+     *
+     * @param username kullanıcı adı
+     * @param password kullanıcı şifresi
+     * @return giriş başarılıysa kullanıcı, değilse null
+     */
     public void register(String username, String password) {
         String sql = "INSERT INTO users(username,password) VALUES (?,?)";
 

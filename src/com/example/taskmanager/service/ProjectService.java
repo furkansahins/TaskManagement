@@ -8,11 +8,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * Proje işlemlerini yöneten servis sınıfıdır.
+ */
 public class ProjectService {
-
-    /* ---------- CREATE ---------- */
-
+    /**
+     * Yeni bir proje oluşturur.
+     *
+     * @param name proje adı
+     * @param ownerId projeyi oluşturan kullanıcı
+     */
     public void createProject(String name, int ownerId) {
 
         String sql = "INSERT INTO projects(name, owner_id) VALUES (?, ?)";
@@ -28,8 +33,27 @@ public class ProjectService {
             e.printStackTrace();
         }
     }
+    /**
+     * Belirtilen projeyi siler.
+     *
+     * @param projectId silinecek proje
+     * @param ownerId proje sahibi
+     * @return silme başarılıysa true
+     */
+    public boolean deleteProject(int projectId, int ownerId) {
+        String sql = "DELETE FROM projects WHERE id=? AND owner_id=?";
 
-    /* ---------- READ ---------- */
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
+            ps.setInt(1, projectId);
+            ps.setInt(2, ownerId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 
     public List<Project> getProjectsByUser(int ownerId) {
 
@@ -81,28 +105,14 @@ public class ProjectService {
         return null;
     }
 
-    /* ---------- UPDATE ---------- */
-
-    // TaskService tarafında yapılıyor (assignToProject)
-    // burada bilinçli olarak YOK → SRP
-
-    /* ---------- DELETE ---------- */
-
-    public boolean deleteProject(int projectId, int ownerId) {
-        String sql = "DELETE FROM projects WHERE id=? AND owner_id=?";
-
-        try (Connection c = DatabaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-
-            ps.setInt(1, projectId);
-            ps.setInt(2, ownerId);
-            return ps.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
+    /**
+     * Bir görevi projeye atar.
+     *
+     * @param projectId proje id
+     * @param taskId görev id
+     * @param userId kullanıcı id
+     * @return işlem başarılıysa true
+     */
     public boolean assignTaskToProject(int projectId, int taskId, int userId) {
         String sql = """
         UPDATE tasks

@@ -23,7 +23,6 @@ public class ConsoleMenu {
         }
     }
 
-    /* ================= MAIN MENU ================= */
 
     private void showMainMenu() {
         System.out.println("\n=== MAIN MENU ===");
@@ -79,8 +78,6 @@ public class ConsoleMenu {
         System.out.println("User registered.");
     }
 
-    /* ================= USER MENU ================= */
-
     private void userMenu() {
         while (true) {
             System.out.println("\n=== USER MENU ===");
@@ -103,8 +100,6 @@ public class ConsoleMenu {
             }
         }
     }
-
-    /* ================= TASK MENU ================= */
 
     private void taskMenu() {
         while (true) {
@@ -207,8 +202,6 @@ public class ConsoleMenu {
             System.out.println("Invalid Task ID.");
         }
     }
-
-    /* ================= PROJECT MENU ================= */
 
     private void projectMenu() {
         while (true) {
@@ -335,10 +328,9 @@ public class ConsoleMenu {
         }
     }
 
-    /* ================= DEADLINES ================= */
-
     private void showUpcomingDeadlines() {
-        List<TimedTask> tasks = taskService.getUpcomingTimedTasks(currentUser.getId());
+        List<TimedTask> tasks =
+                taskService.getUpcomingTimedTasks(currentUser.getId());
 
         if (tasks.isEmpty()) {
             System.out.println("No upcoming deadlines.");
@@ -348,14 +340,24 @@ public class ConsoleMenu {
         System.out.println("\n=== UPCOMING DEADLINES ===");
 
         for (TimedTask task : tasks) {
-            long daysLeft = task.daysLeft();
-            System.out.println(task.getTitle()
-                    + " | " + task.getDeadline()
-                    + " (" + daysLeft + " days left)");
+            System.out.print(task.getTitle()
+                    + " | Deadline: " + task.getDeadline()
+                    + " (" + task.daysLeft() + " days left)");
+
+            if (task.isOverdue()) {
+                System.out.print(" ⚠ OVERDUE");
+            } else if (task.isUrgent()) {
+                System.out.print(" ⚠ URGENT");
+            }
+
+            if (task.isCompleted()) {
+                System.out.print(" ✅ DONE");
+            }
+
+            System.out.println();
         }
     }
 
-    /* ================= HELPERS ================= */
 
     private Priority askPriority() {
         while (true) {
@@ -379,21 +381,30 @@ public class ConsoleMenu {
     }
 
     private void printTask(Task task) {
-        System.out.print(task.getId() + " | " + task.getTitle());
+        System.out.print(
+                task.getId()
+                        + " | " + task.getTitle()
+        );
 
         if (task.getPriority() != null) {
             System.out.print(" | " + task.getPriority());
         }
 
         if (task instanceof TimedTask timedTask) {
-            System.out.print(" | Deadline: " +
-                    timedTask.getDeadline().getDate());
+            long daysLeft = timedTask.daysLeft();
+
+            System.out.print(" | Deadline: " + timedTask.getDeadline());
 
             if (timedTask.isOverdue()) {
                 System.out.print(" ⚠ OVERDUE");
+            } else {
+                System.out.print(" (" + daysLeft + " days left)");
+
+                if (timedTask.isUrgent()) {
+                    System.out.print(" ⚠ URGENT");
+                }
             }
         }
-
 
         if (task.isCompleted()) {
             System.out.print(" ✅ DONE");
@@ -401,6 +412,8 @@ public class ConsoleMenu {
 
         System.out.println();
     }
+
+
     private void completeProjectTask() {
         listProjects();
 
