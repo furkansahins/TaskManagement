@@ -1,30 +1,36 @@
 package com.example.taskmanager.model;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class Notification {
 
-    private Long id;
+    private int id;
+    private int userId;
     private String message;
-    private LocalDate createdAt;
     private boolean read;
-    private User user;
+    private LocalDateTime createdAt;
 
-    public Notification(Long id, String message, User user) {
+    public Notification(int id, int userId, String message,
+                        boolean read, LocalDateTime createdAt) {
         this.id = id;
+        this.userId = userId;
         this.message = message;
-        this.user = user;
-        this.createdAt = LocalDate.now();
+        this.read = read;
+        this.createdAt = createdAt;
+    }
+
+    public Notification(int userId, String message) {
+        this.userId = userId;
+        this.message = message;
         this.read = false;
+        this.createdAt = LocalDateTime.now();
     }
 
-    public String getMessage() {
-        return message;
-    }
-
-    public boolean isRead() {
-        return read;
-    }
+    // getters
+    public int getId() { return id; }
+    public int getUserId() { return userId; }
+    public String getMessage() { return message; }
+    public boolean isRead() { return read; }
 
     public void markAsRead() {
         this.read = true;

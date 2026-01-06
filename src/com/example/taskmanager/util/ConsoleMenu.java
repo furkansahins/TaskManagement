@@ -56,7 +56,26 @@ public class ConsoleMenu {
 
         if (currentUser != null) {
             System.out.println("Login successful!");
+            NotificationService notificationService = new NotificationService();
+
+// 🔔 Otomatik reminder üret
+            notificationService.checkAndCreateUrgentNotifications(currentUser.getId());
+
+// 🔔 Oku ve yazdır
+            List<Notification> notifications =
+                    notificationService.getUnreadNotifications(currentUser.getId());
+
+            if (!notifications.isEmpty()) {
+                System.out.println("\n🔔 NOTIFICATIONS:");
+                for (Notification n : notifications) {
+                    System.out.println("- " + n.getMessage());
+                }
+
+                notificationService.markAllAsRead(currentUser.getId());
+            }
+
             userMenu();
+
         } else {
             System.out.println("Login failed.");
         }
@@ -83,7 +102,7 @@ public class ConsoleMenu {
             System.out.println("\n=== USER MENU ===");
             System.out.println("1. Task Menu");
             System.out.println("2. Project Menu");
-            System.out.println("3. Upcoming Deadlines");
+            System.out.println("3. View Upcoming Notifications");
             System.out.println("0. Logout");
 
             String choice = scanner.nextLine();
@@ -104,8 +123,8 @@ public class ConsoleMenu {
     private void taskMenu() {
         while (true) {
             System.out.println("\n--- TASK MENU ---");
-            System.out.println("1. Add Task");
-            System.out.println("2. Add Timed Task");
+            System.out.println("1. Create Task");
+            System.out.println("2. Create Timed Task");
             System.out.println("3. List Tasks");
             System.out.println("4. Complete Task");
             System.out.println("5. Delete Task");
@@ -230,15 +249,18 @@ public class ConsoleMenu {
 
     private void createProject() {
         System.out.print("Project name: ");
-        String projectName = scanner.nextLine();
+        String projectName = scanner.nextLine().trim();
 
-        boolean success =
-                projectService.createProject(projectName, currentUser.getId());
+        if (projectName.isEmpty()) {
+            System.out.println("Project name cannot be empty.");
+            return;
+        }
 
-        System.out.println(success
-                ? "Project created."
-                : "Project already exists.");
+        boolean success = projectService.createProject(projectName, currentUser.getId());
+
+        System.out.println(success ? "Project created." : "Project already exists.");
     }
+
 
 
     private void listProjects() {
@@ -273,15 +295,19 @@ public class ConsoleMenu {
             System.out.print("Enter Task ID: ");
             int taskId = Integer.parseInt(scanner.nextLine().trim());
 
-            boolean success =
-                    projectService.assignTaskToProject(projectId, taskId, currentUser.getId());
+            boolean success = projectService.assignTaskToProject(projectId, taskId, currentUser.getId());
 
-            System.out.println(success ? "Task assigned." : "Assignment failed.");
+            if (success) {
+                System.out.println("Task assigned to project.");
+            } else {
+                System.out.println("Task is already assigned to a project or invalid IDs.");
+            }
 
         } catch (NumberFormatException e) {
             System.out.println("Invalid ID input.");
         }
     }
+
 
     private void deleteProject() {
         listProjects();
