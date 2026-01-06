@@ -4,6 +4,7 @@ import com.example.taskmanager.Database.DatabaseConnection;
 import com.example.taskmanager.model.User;
 
 import java.sql.*;
+import java.util.regex.Pattern;
 
 public class UserService {
     /**
@@ -37,6 +38,17 @@ public class UserService {
         return null;
     }
 
+    private static final Pattern VALID_USERNAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_-]+$");
+
+    public boolean isValidUsername(String username) {
+
+        if (!VALID_USERNAME_PATTERN.matcher(username).matches()) {
+            System.err.println("KULLANICI ADI GÜVENLİK UYARISI: Sadece harf, rakam, alt çizgi (_) ve tire (-) kullanabilirsiniz.");
+            return false;
+        }
+        return true;
+    }
+
     /**
      * Kullanıcının sisteme kayıt yapmasını sağlar.
      *
@@ -57,4 +69,6 @@ public class UserService {
             e.printStackTrace();
         }
     }
+
+
 }

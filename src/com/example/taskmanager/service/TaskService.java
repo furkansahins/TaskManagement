@@ -191,9 +191,6 @@ public class TaskService {
         return upcoming;
     }
 
-
-
-
     private Task mapTask(ResultSet rs) throws SQLException {
 
         int id = rs.getInt("id");
@@ -229,7 +226,6 @@ public class TaskService {
 
         List<Task> tasks = getTasksByProject(projectId);
 
-        // 📂 Desktop path (Windows / Mac / Linux uyumlu)
         String desktopPath = System.getProperty("user.home") + File.separator + "Desktop";
 
         String fileName = projectName.replaceAll("\\s+", "_") + ".txt";

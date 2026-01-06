@@ -58,10 +58,8 @@ public class ConsoleMenu {
             System.out.println("Login successful!");
             NotificationService notificationService = new NotificationService();
 
-// 🔔 Otomatik reminder üret
             notificationService.checkAndCreateUrgentNotifications(currentUser.getId());
 
-// 🔔 Oku ve yazdır
             List<Notification> notifications =
                     notificationService.getUnreadNotifications(currentUser.getId());
 
@@ -90,6 +88,10 @@ public class ConsoleMenu {
 
         if (username.isEmpty() || password.isEmpty()) {
             System.out.println("Username and password cannot be empty.");
+            return;
+        }
+
+        if (!userService.isValidUsername(username)) {
             return;
         }
 
@@ -382,7 +384,6 @@ public class ConsoleMenu {
             System.out.println();
         }
     }
-
 
     private Priority askPriority() {
         while (true) {
